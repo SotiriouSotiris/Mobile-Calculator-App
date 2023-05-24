@@ -33,6 +33,7 @@ class Calculator(
     }
 
     fun getNextValidButtons(): MutableList<String> {
+        // create a list(tempList) of valid buttons to click
         val lastButtonClicked = previousButtonClicked.lastOrNull()
 
         val tempList = mutableListOf<String>("C", "Undo")
@@ -43,9 +44,6 @@ class Calculator(
             }
         }
         val isMathSymb = lastButtonClicked in listOf<String>("%", "/", "x", "-", "+")
-
-        println("Is number? $isNumber")
-        println("Is math sybmol? $isMathSymb")
 
         if (lastButtonClicked == ".") {
             for (i in 0..9) {
@@ -101,31 +99,24 @@ class Calculator(
 
         setValidButtonsToClick()
 
-        println("=====================")
-        println(validButtonsToClick)
-
-        println(newInput)
-
-        if (newInput == "Undo"){
-            println("previous buttons $previousButtonClicked")
-            if(previousButtonClicked.removeLastOrNull() != null) {
-                println("previous buttons $previousButtonClicked")
-                textViewElement.text = textViewElement.text.dropLast(1)
-                setValidButtonsToClick()
-            }
+        // Undo was pressed and this is not the first action
+        if (newInput == "Undo" && previousButtonClicked.removeLastOrNull() != null){
+            // go back one action and reset the valid buttons to click
+            textViewElement.text = textViewElement.text.dropLast(1)
+            setValidButtonsToClick()
         }
 
         if(newInput in validButtonsToClick){
 
             if (newInput == "C"){
-                println("Clearing")
                 textViewElement.text = ""
                 previousButtonClicked = mutableListOf<String>()
 
             } else if (newInput == "=") {
-                println("Calculating")
+                // calculate the equation
                 var result = calculateEquation(textViewElement.text.toString())
                 if(result != null) {
+                    // check if result has decimal to show them or not
                     if (result.rem(1) == 0.0) {
                         textViewElement.text = result.toInt().toString()
                     } else {
@@ -151,6 +142,7 @@ class Calculator(
             }
 
         }else{
+            // show not valid notification with animation
             notValidElement.startAnimation(fadeInAnim)
             notValidElement.visibility = View.VISIBLE
 
