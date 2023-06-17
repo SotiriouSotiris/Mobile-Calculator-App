@@ -1,5 +1,6 @@
 package com.example.mobilecalculator
 
+import android.database.sqlite.SQLiteDatabase.openDatabase
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -9,6 +10,15 @@ import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.TextView
+import androidx.room.Room
+import com.example.mobilecalculator.DatabaseProvider.getDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,10 +29,33 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fadeInAnimation: Animation
     private lateinit var fadeOutAnimation: Animation
 
+    private lateinit var database : AppDatabase
+
+    private var usersCreated = 0
+
     fun onButtonClick(view: View) {
         val buttonTag = view.tag as? String
         if (!buttonTag.isNullOrEmpty()) {
             calculator.updateTextView(buttonTag)
+        }
+    }
+
+    suspend fun fetchAllDataFromDatabase(){
+        withContext(Dispatchers.IO){
+            val dao = database.userDao()
+            val users = dao.getAll()
+            usersCreated = users.size
+        }
+    }
+
+    suspend fun insertRecordInDatabase(name: String, last: String){
+        withContext(Dispatchers.IO){
+            val dao = database.userDao()
+
+            val entity = User(usersCreated, name, last)
+            dao.insertAll(entity)
+
+            usersCreated+=1
         }
     }
 
@@ -54,6 +87,15 @@ class MainActivity : AppCompatActivity() {
 
         calculator = Calculator(mutableListOf<String>(), textViewElement, notValidElement, handler, fadeInAnimation, fadeOutAnimation, mutableListOf<String>())
         calculator.setValidButtonsToClick()
+
+        CoroutineScope(Dispatchers.Default).launch {
+            val db = getDatabase(applicationContext)
+            database = db
+
+            fetchAllDataFromDatabase()
+
+            insertRecordInDatabase("Sotiris", "Sotiriou")
+        }
 
     }
 }
